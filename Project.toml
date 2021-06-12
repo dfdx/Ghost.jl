@@ -1,5 +1,5 @@
-name = "Umlaut"
-uuid = "6afa751e-22fd-438f-90be-efc47d820e71"
+name = "Ghost"
+uuid = "4f8f7498-1303-42e1-920c-5033445536df"
 authors = ["Andrei Zhabinski <andrei.zhabinski@gmail.com>"]
 version = "0.1.0"
 

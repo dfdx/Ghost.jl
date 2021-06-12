@@ -1,6 +1,6 @@
 
 @testset "functionresolver" begin
-    rsv = Umlaut.FunctionResolver{Symbol}()
+    rsv = Ghost.FunctionResolver{Symbol}()
     rsv[Tuple{typeof(sin), Vararg}] = :Vararg
     rsv[Tuple{typeof(sin), Float64}] = :Float64
     rsv[Tuple{typeof(sin), Real}] = :Real

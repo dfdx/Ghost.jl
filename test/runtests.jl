@@ -1,8 +1,8 @@
 using Test
-using Umlaut
-using Umlaut: Loop, should_trace_loops, should_trace_loops!
-using Umlaut: compile, play!
-using Umlaut: CPU, GPU
+using Ghost
+using Ghost: Loop, should_trace_loops, should_trace_loops!
+using Ghost: compile, play!
+using Ghost: CPU, GPU
 using CUDA
 
 

@@ -1,4 +1,4 @@
-module Umlaut
+module Ghost
 
 export trace
 

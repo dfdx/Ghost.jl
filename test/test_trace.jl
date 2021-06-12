@@ -1,4 +1,4 @@
-import Umlaut: trace, V, Call, play!
+import Ghost: trace, V, Call, play!
 
 inc_mul(a::Real, b::Real) = a * (b + 1.0)
 inc_mul(A::AbstractArray, B::AbstractArray) = inc_mul.(A, B)

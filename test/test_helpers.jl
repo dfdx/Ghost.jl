@@ -1,4 +1,4 @@
-import Umlaut: ungetindex, ungetindex!
+import Ghost: ungetindex, ungetindex!
 
 
 @testset "helpers: getindex" begin

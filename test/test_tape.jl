@@ -1,4 +1,4 @@
-import Umlaut: Tape, V, inputs!, rebind!, mkcall
+import Ghost: Tape, V, inputs!, rebind!, mkcall
 
 
 @testset "tape" begin

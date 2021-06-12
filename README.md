@@ -1,2 +1,2 @@
-# Umlaut.jl
+# Ghost.jl
 Julia code tracer
