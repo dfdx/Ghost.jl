@@ -1,3 +1,6 @@
+"""
+Base type for operations on a tape
+"""
 abstract type AbstractOp end
 
 ########################################################################
@@ -9,10 +12,10 @@ Variable represents a reference to an operation on a tape.
 Variables can be used to index tape or keep reference to
 a specific operation on the tape.
 
-Variables can be:
+Variables (also aliesed as `V`) can be:
 
-* free, created as V(id) - used for indexing into tape
-* bound, created as V(op) - used to keep a robust reference
+* free, created as `V(id)` - used for indexing into tape
+* bound, created as `V(op)`` - used to keep a robust reference
   to an operation on the tape
 """
 mutable struct Variable
@@ -85,6 +88,7 @@ end
 
 ## Input
 
+"Operation representing input data of a tape"
 mutable struct Input <: AbstractOp
     id::Int
     val::Any
@@ -97,6 +101,7 @@ Base.show(io::IO, op::Input) = print(io, "inp %$(op.id)::$(op.typ)")
 
 ## Constant
 
+"Operation representing a constant value on a tape"
 mutable struct Constant <: AbstractOp
     id::Int
     typ::Type
@@ -111,6 +116,10 @@ Base.show(io::IO, op::Constant) = print(io, "const %$(op.id) = $(op.val)::$(op.t
 
 ## Call
 
+"""
+Operation represening function call on tape. Typically, calls
+are constructed using [`mkcall`](@ref) function.
+"""
 mutable struct Call <: AbstractOp
     id::Int
     val::Any
@@ -204,8 +213,10 @@ function Base.getproperty(tape::Tape, p::Symbol)
     end
 end
 
-
+"Get list of a tape input variables"
 inputs(tape::Tape) = [V(op) for op in tape.ops if op isa Input]
+
+"Set values of a tape inputs"
 function inputs!(tape::Tape, vals...)
     @assert(isempty(tape) || length(inputs(tape)) == length(vals),
             "This tape contains $(length(inputs(tape))) inputs, but " *
