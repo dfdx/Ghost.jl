@@ -66,7 +66,7 @@ Tapes can be modified in a variaty of ways. For this set of examples, we won't t
 
 ```@example
 using Ghost
-import Ghost: V, inputs!, mkcall
+import Ghost: Tape, V, inputs!, mkcall
 
 tape = Tape()
 # record inputs, using nothing instead of a function argument
@@ -78,7 +78,7 @@ v1, v2, v3 = inputs!(tape, nothing, 1.0, 2.0)
 
 ```@example
 using Ghost                             # hide
-import Ghost: V, inputs!, mkcall        # hide
+import Ghost: Tape, V, inputs!, mkcall  # hide
 tape = Tape()                           # hide
 v1, v2, v3 = inputs!(tape, nothing, 1.0, 2.0)  # hide
 
@@ -91,7 +91,7 @@ println(tape)
 
 ```@example
 using Ghost                             # hide
-import Ghost: V, inputs!, mkcall        # hide
+import Ghost: Tape, V, inputs!, mkcall  # hide
 tape = Tape()                           # hide
 v1, v2, v3 = inputs!(tape, nothing, 1.0, 2.0)  # hide
 v4 = push!(tape, mkcall(*, v2, v3))     # hide
@@ -104,7 +104,7 @@ println(tape)
 
 ```@example
 using Ghost                             # hide
-import Ghost: V, inputs!, mkcall        # hide
+import Ghost: Tape, V, inputs!, mkcall  # hide
 tape = Tape()                           # hide
 v1, v2, v3 = inputs!(tape, nothing, 1.0, 2.0)  # hide
 v4 = push!(tape, mkcall(*, v2, v3))      # hide
