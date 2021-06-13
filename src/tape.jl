@@ -167,7 +167,9 @@ end
 #                                 TAPE                                 #
 ########################################################################
 
-
+"""
+Linearized representation of a function execution.
+"""
 mutable struct Tape{C}
     # linearized execution graph
     ops::Vector{<:AbstractOp}
