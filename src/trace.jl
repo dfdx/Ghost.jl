@@ -33,6 +33,13 @@ const PRIMITIVES = FunctionResolver{Bool}(
 )
 
 
+"""
+    is_primitive(sig)
+
+The default implementation of `is_primitive` argument in [`trace()`](@ref).
+Returns `true` if the method with the provided signature is defined
+in one of the Julia's built-in modules, e.g. `Base`, `Core`, `Broadcast`, etc.
+"""
 function is_primitive(sig)
     return sig in PRIMITIVES
 end
@@ -74,6 +81,12 @@ const TRACING_OPTIONS = Ref(Dict())
 Turn on/off loop tracing. Without parameters, resets the flag to the default value
 """
 should_trace_loops!(val::Bool=false) = (TRACING_OPTIONS[][:trace_loops] = val)
+
+"""
+    should_trace_loops()
+
+Check the current value of the loop tracing option.
+"""
 should_trace_loops() = get(TRACING_OPTIONS[], :trace_loops, false)
 
 
@@ -582,7 +595,7 @@ non-primitives. There are 2 ways to tell `trace` that a particular method
 is a primitive:
 
 * provide `is_primitive(sig) -> Bool` function, where `sig` is
-    is a method signature, e.g. `map(typeof, (f, args...))`
+    is a method signature, e.g. `Tuple{map(typeof, (f, args...))...}`
 * provide an iterable `primitives`; in this case `trace` matches
     all methods of this function
 """

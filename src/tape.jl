@@ -321,6 +321,10 @@ end
 
 ## Loop
 
+"""
+Operation representing a loop in an computational graph.
+See the online documentation for details.
+"""
 mutable struct Loop <: AbstractOp
     id::Int
     parent_inputs::Vector{Variable}
