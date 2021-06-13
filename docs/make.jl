@@ -8,7 +8,7 @@ makedocs(
     pages = [
         "Main" => "index.md",
         "Linearized traces" => "trace.md",
-        "Tape Anatomy" => "tape.md",
+        "Tape anatomy" => "tape.md",
         "Loops" => "loops.md",
         "Reference" => "reference.md",
     ],

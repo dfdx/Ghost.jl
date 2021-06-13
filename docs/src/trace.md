@@ -57,9 +57,21 @@ val, tape = trace(baz, 1.0, 2.0; is_primitive=custom_is_primitive)
 
 See also [`Ghost.FunctionResolver`](@ref) for better understanding of the implementation of `is_primitive`.
 
+In complex scenarios it may be useful to bring additional application-specific data together with a tape. For this purpose [`Tape`](@ref Ghost.Tape) is parametrized by a context type which is `Dict{Any, Any}` by default, but can be anything. A context object can be attached during tracing using the `ctx` keyword:
 
+```@example
+foo(x) = 2x                # hide
+bar(x, y) = foo(x) + 3y    # hide
+baz(x, y) = bar(x, y) - 1  # hide
 
-* basic scenario
-* primitives
-* context
-* `__new__`
+using Ghost                # hide
+
+mutable struct MyCtx
+    a
+    b
+end
+
+val, tape = trace(baz, 1.0, 2.0; ctx=MyCtx(0, 0))
+```
+
+The presense of the context doesn't affect tracing, but can be used during further tape processing. See [Tape context](@ref) for more details.

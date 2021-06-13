@@ -119,6 +119,12 @@ Base.show(io::IO, op::Constant) = print(io, "const %$(op.id) = $(op.val)::$(op.t
 """
 Operation represening function call on tape. Typically, calls
 are constructed using [`mkcall`](@ref) function.
+
+Important fields of a Call:
+
+* `fn::Union{Function,Type,Variable}` - function or object to be called
+* `args::Vector` - vector of variables or values used as arguments
+* `val::Any` - the result of the function call
 """
 mutable struct Call <: AbstractOp
     id::Int
@@ -178,6 +184,15 @@ end
 
 """
 Linearized representation of a function execution.
+
+Fields
+======
+
+* `ops` - vector of operations on the tape
+* `result` - variable pointing to the operation to be used as the result
+* `parent` - parent tape if any
+* `meta` - internal metadata
+* `c` - application-specific context
 """
 mutable struct Tape{C}
     # linearized execution graph
@@ -189,7 +204,7 @@ mutable struct Tape{C}
     # tape metadata (depends on the context)
     meta::Dict
     # application-specific context
-c::C
+    c::C
 end
 
 Tape(c::C) where C = Tape(AbstractOp[], Variable(0), nothing, Dict(), c)
@@ -293,7 +308,7 @@ end
 
 
 """
-    replace!(tape, idx => [ops...]; rebind_to)
+    replace!(tape, idx => new_ops; rebind_to=length(new_ops))
 
 Replace operation at specified index with 1 or more other operations,
 rebind variables in the reminder of the tape to ops[rebind_to].
@@ -473,6 +488,12 @@ function exec!(tape::Tape, op::Loop)
 end
 
 
+"""
+    play!(tape::Tape, args...; debug=false)
+
+Execute operations on the tape one by one.
+If `debug=true`, print each operation before execution.
+"""
 function play!(tape::Tape, args...; debug=false)
     for (i, val) in enumerate(args)
         @assert(tape[V(i)] isa Input, "More arguments than the original function had")
