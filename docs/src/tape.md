@@ -1,8 +1,8 @@
-# Tape anatomy
-
 ```@meta
 CurrentModule = Ghost
 ```
+
+# Tape anatomy
 
 ## Operations
 
@@ -147,3 +147,33 @@ It's possible to see what exactly is being compiled using [`to_expr`](@ref) func
 
 
 ## Tape context
+
+[`Tape`](@ref) is parametrized by a context type. Context is a way to pass arbitrary data with a tape. For instance, imagine that you are working on a DSL engine which traces function execution and enriches the resulting tape with domain-specific operations. You also want to keep track of all added operations, but don't want to pass around an additional object holding them. You can attach a custom context to the tape and reference it as `tape.c`:
+
+```julia
+using Ghost
+import Ghost: Variable
+
+dsl_function(x) = ...
+
+
+mutable struct DSLContext
+    added_variables::Vector{Variable}
+end
+
+_, tape = trace(dsl_function, 2.0; ctx=DSLContext([]))
+
+
+function add_operations(tape::Tape{DSLContext})
+    v = push!(tape, ...)
+    push!(tape.c.added_variables, v)
+    ...
+end
+
+function process_dsl_tape(tape::Tape{DSLContext})
+    vars = tape.c.added_variables
+    ...
+end
+```
+
+Just to remind you, if your context contains variables and you plan to use [`rebind!`](@ref), you must also implement [`rebind_context!`](@ref) for your specific context type.

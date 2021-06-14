@@ -64,6 +64,15 @@ The following types and functions might be useful for better understanding of Gh
 
 ```@docs
 FunctionResolver
+Frame
+TracerOptions
+_LoopEnd
+record_or_recurse!
+push_frame!
+pop_frame!
+enter_loop!
+stop_loop_tracing!
+exit_loop!
 ```
 
 ## Index

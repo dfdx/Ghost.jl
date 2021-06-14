@@ -1,6 +1,4 @@
-# import Statistics
 using LinearAlgebra
-# using Setfield
 using OrderedCollections
 using IRTools
 using ChainRulesCore
