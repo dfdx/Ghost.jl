@@ -7,7 +7,6 @@ closest matching function signature. Example:
     rsv[Tuple{typeof(sin), Float64}] = :Float64
     rsv[Tuple{typeof(sin), Real}] = :Real
     rsv[Tuple{typeof(sin), Number}] = :Number
-    order!(rsv)                      # Important: sort methods before usage
 
     rsv[Tuple{typeof(sin), Float64}]   # ==> :Float64
     rsv[Tuple{typeof(sin), Float32}]   # ==> :Real

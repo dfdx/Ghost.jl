@@ -69,6 +69,11 @@ function to_expr(op::Loop, prefix="")
 end
 
 
+"""
+    to_expr(tape::Tape)
+
+Generate a Julia expression corresponding to the tape.
+"""
 function to_expr(tape::Tape)
     fn_name = gensym("grad_$(tape[V(1)].val)")
     header = Expr(:call, fn_name)
@@ -92,4 +97,9 @@ function to_expr(tape::Tape)
 end
 
 
+"""
+    compile(tape::Tape)
+
+Compile tape into a normal Julia function.
+"""
 compile(tape::Tape) = Base.eval(@__MODULE__, to_expr(tape))

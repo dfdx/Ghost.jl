@@ -1,3 +1,10 @@
+"""
+    __new__(T, args...)
+
+User-level version of the `new()` pseudofunction.
+Can be used to construct most Julia types, including structs
+without default constructors, closures, etc.
+"""
 @generated function __new__(T, args...)
     return Expr(:splatnew, :T, :args)
 end
