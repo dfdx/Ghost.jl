@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tape anatomy · Ghost</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Ghost</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Main</a></li><li><a class="tocitem" href="../trace/">Linearized traces</a></li><li class="is-active"><a class="tocitem" href>Tape anatomy</a><ul class="internal"><li><a class="tocitem" href="#Operations"><span>Operations</span></a></li><li><a class="tocitem" href="#Variables"><span>Variables</span></a></li><li><a class="tocitem" href="#Transformations"><span>Transformations</span></a></li><li><a class="tocitem" href="#Tape-execution-and-compilation"><span>Tape execution &amp; compilation</span></a></li><li><a class="tocitem" href="#Tape-context"><span>Tape context</span></a></li></ul></li><li><a class="tocitem" href="../loops/">Loops</a></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tape anatomy</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tape anatomy</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/dfdx/Ghost.jl/blob/master/docs/src/tape.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Tape-anatomy"><a class="docs-heading-anchor" href="#Tape-anatomy">Tape anatomy</a><a id="Tape-anatomy-1"></a><a class="docs-heading-anchor-permalink" href="#Tape-anatomy" title="Permalink"></a></h1><h2 id="Operations"><a class="docs-heading-anchor" href="#Operations">Operations</a><a id="Operations-1"></a><a class="docs-heading-anchor-permalink" href="#Operations" title="Permalink"></a></h2><p>The very core of every tape is a list of operations. Let&#39;s take a look at one particular tape:</p><pre><code class="language-julia">using Ghost
+
+foo(x) = 2x + 1
+_, tape = trace(foo, 2.0)
+print(tape)</code></pre><pre class="documenter-example-output">Tape{Dict{Any, Any}}
+  inp %1::typeof(Main.__atexample__260.foo)
+  inp %2::Float64
+  %3 = *(2, %2)::Float64
+  %4 = +(%3, 1)::Float64</pre><p>Each indented line in this output represents an operation. The first 2 designate the tape inputs and have type <a href="../reference/#Ghost.Input"><code>Input</code></a>. Note that the traced function itself is also recorded as an input and can be referenced from other operations on the tape, which is a typical case in closures and other callable objects. We can set new inputs to the tape as <code>inputs!(tape, foo, 3.0)</code>.</p><p>Operations 3 and 4 represent function calls and have type <a href="../reference/#Ghost.Call"><code>Call</code></a>. For example, the notation <code>%4 = +(%3, 1)</code> means that variable <code>%4</code> is equal to the addition of variable <code>%3</code> and a constant <code>1</code> (we will talk about variables in a minute). The easiest way to construct this operation is by using <a href="../reference/#Ghost.mkcall"><code>mkcall</code></a>.</p><p>Although constants can be used directly inside <code>Call</code>s, sometimes we need them as separate objects on the tape. <a href="../reference/#Ghost.Constant"><code>Constant</code></a> operation serves exactly this role.</p><p>Finally, there&#39;s an experimental <a href="../reference/#Ghost.Loop"><code>Loop</code></a> operation which presents whole loops in a computational graphs and contain their own subtapes.</p><h2 id="Variables"><a class="docs-heading-anchor" href="#Variables">Variables</a><a id="Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Variables" title="Permalink"></a></h2><p><a href="../reference/#Ghost.Variable"><code>Variable</code></a> (also aliased as just <code>V</code>) is a reference to  an operation on tape. Variables can be bound or unbound.</p><p>Unbound variables are constructed as <code>V(id)</code> and point to an operation by its <em>position</em> on a tape. Their primary use is for indexing and short-living handling, e.g.:</p><pre><code class="language-julia">import Ghost.V
+
+op = tape[V(4)]</code></pre><pre class="documenter-example-output">%4 = +(%3, 1)::Float64</pre><p>On the contrary, bound variables (created as <code>V(op)</code>) point to a <em>specific operation</em> on the tape. Even if the tape is modified, the reference is preserved. Here&#39;s an illustrative example:</p><pre><code class="language-julia">vu = V(4)         # unbound
+vb = V(tape[vu])  # bound, can also be created as `bound(tape, vu)`
+
+# insert a dummy operation
+insert!(tape, 3, Constant(42))
+println(tape)
+println(&quot;Unbound variable is still $vu&quot;)
+println(&quot;Bound variable is now $vb&quot;)</code></pre><pre class="documenter-example-output">Tape{Dict{Any, Any}}
+  inp %1::typeof(Main.__atexample__262.foo)
+  inp %2::Float64
+  const %3 = 42::Int64
+  %4 = *(2, %2)::Float64
+  %5 = +(%4, 1)::Float64
+
+Unbound variable is still %4
+Bound variable is now %5</pre><p>Most functions in Ghost create bound variables to make them resistant to transformations. Note, for example, how in the tape above the last operation automatically updated itself from <code>+(%3, 1)</code> to <code>+(%4, 1)</code>. Yet sometimes explicit rebinding is neccessary, in which case <a href="../reference/#Ghost.rebind!"><code>rebind!</code></a> can be used. Note that for <a href="../reference/#Ghost.rebind!"><code>rebind!</code></a> to work properly with a user-defined tape context (see below), one must also implement <a href="../reference/#Ghost.rebind_context!"><code>rebind_context!</code></a></p><h2 id="Transformations"><a class="docs-heading-anchor" href="#Transformations">Transformations</a><a id="Transformations-1"></a><a class="docs-heading-anchor-permalink" href="#Transformations" title="Permalink"></a></h2><p>Tapes can be modified in a variaty of ways. For this set of examples, we won&#39;t trace any function, but instead construct a tape manually:</p><pre><code class="language-julia">using Ghost
+import Ghost: Tape, V, inputs!, mkcall
+
+tape = Tape()
+# record inputs, using nothing instead of a function argument
+v1, v2, v3 = inputs!(tape, nothing, 1.0, 2.0)</code></pre><pre class="documenter-example-output">3-element Vector{Ghost.Variable}:
+ %1
+ %2
+ %3</pre><p><a href="../reference/#Base.push!"><code>push!</code></a> is the standard way to add new operations to the tape, e.g.:</p><pre><code class="language-julia">v4 = push!(tape, mkcall(*, v2, v3))
+println(tape)</code></pre><pre class="documenter-example-output">Tape{Dict{Any, Any}}
+  inp %1::Nothing
+  inp %2::Float64
+  inp %3::Float64
+  %4 = *(%2, %3)::Float64</pre><p><a href="../reference/#Base.insert!"><code>insert!</code></a> is similar to <code>push!</code>, but adds operation to the specified position:</p><pre><code class="language-julia">v5 = insert!(tape, 4, mkcall(-, v2, 1))  # inserted before v4
+println(tape)</code></pre><pre class="documenter-example-output">Tape{Dict{Any, Any}}
+  inp %1::Nothing
+  inp %2::Float64
+  inp %3::Float64
+  %4 = -(%2, 1)::Float64
+  %5 = *(%2, %3)::Float64</pre><p><a href="../reference/#Base.replace!"><code>replace!</code></a> is useful when you need to replace an operation with one or more other operations.</p><pre><code class="language-julia">new_op1 = mkcall(/, V(2), 2)
+new_op2 = mkcall(+, V(new_op1), 1)
+replace!(tape, 4 =&gt; [new_op1, new_op2]; rebind_to=2)
+println(tape)</code></pre><pre class="documenter-example-output">Tape{Dict{Any, Any}}
+  inp %1::Nothing
+  inp %2::Float64
+  inp %3::Float64
+  %4 = /(%2, 2)::Missing
+  %5 = +(%4, 1)::Missing
+  %6 = *(%2, %3)::Float64</pre><h2 id="Tape-execution-and-compilation"><a class="docs-heading-anchor" href="#Tape-execution-and-compilation">Tape execution &amp; compilation</a><a id="Tape-execution-and-compilation-1"></a><a class="docs-heading-anchor-permalink" href="#Tape-execution-and-compilation" title="Permalink"></a></h2><p>There are 2 ways to execute a tape. For debug purposes it&#39;s easiest to run <a href="../reference/#Ghost.play!"><code>play!</code></a>:</p><pre><code class="language-julia">using Ghost
+import Ghost: play!
+
+foo(x) = 2x + 1
+_, tape = trace(foo, 2.0)
+
+play!(tape, foo, 3.0)</code></pre><pre class="documenter-example-output">7.0</pre><p><a href="../reference/#Ghost.compile"><code>compile</code></a> turns the tape into a normal Julia function (subject to the <a href="https://discourse.julialang.org/t/how-to-bypass-the-world-age-problem/7012">World Age restriction</a>):</p><pre><code class="language-julia">using Ghost
+import Ghost: compile
+
+foo(x) = 2x + 1
+_, tape = trace(foo, 2.0)
+
+foo2 = compile(tape)
+foo2(foo, 3.0)   # note: providing the original `foo` as the 1st argument</code></pre><pre class="documenter-example-output">7.0</pre><p>It&#39;s possible to see what exactly is being compiled using <a href="../reference/#Ghost.to_expr"><code>to_expr</code></a> function.</p><h2 id="Tape-context"><a class="docs-heading-anchor" href="#Tape-context">Tape context</a><a id="Tape-context-1"></a><a class="docs-heading-anchor-permalink" href="#Tape-context" title="Permalink"></a></h2><p><a href="../reference/#Ghost.Tape"><code>Tape</code></a> is parametrized by a context type. Context is a way to pass arbitrary data with a tape. For instance, imagine that you are working on a DSL engine which traces function execution and enriches the resulting tape with domain-specific operations. You also want to keep track of all added operations, but don&#39;t want to pass around an additional object holding them. You can attach a custom context to the tape and reference it as <code>tape.c</code>:</p><pre><code class="language-julia">using Ghost
+import Ghost: Variable
+
+dsl_function(x) = ...
+
+
+mutable struct DSLContext
+    added_variables::Vector{Variable}
+end
+
+_, tape = trace(dsl_function, 2.0; ctx=DSLContext([]))
+
+
+function add_operations(tape::Tape{DSLContext})
+    v = push!(tape, ...)
+    push!(tape.c.added_variables, v)
+    ...
+end
+
+function process_dsl_tape(tape::Tape{DSLContext})
+    vars = tape.c.added_variables
+    ...
+end</code></pre><p>Just to remind you, if your context contains variables and you plan to use <a href="../reference/#Ghost.rebind!"><code>rebind!</code></a>, you must also implement <a href="../reference/#Ghost.rebind_context!"><code>rebind_context!</code></a> for your specific context type.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../trace/">« Linearized traces</a><a class="docs-footer-nextpage" href="../loops/">Loops »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 16 June 2021 22:55">Wednesday 16 June 2021</span>. Using Julia version 1.6.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
