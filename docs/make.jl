@@ -16,4 +16,5 @@ makedocs(
 
 deploydocs(
     repo = "github.com/dfdx/Ghost.jl.git",
+    devbranch = "main",
 )
