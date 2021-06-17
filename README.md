@@ -1,7 +1,7 @@
 # Ghost - Julia code tracer
 
 <p align="center">
-  <img width="460" height="300" src="https://github.com/dfdx/Ghost.jl/blob/main/docs/src/logo.png">
+  <img height="300" src="https://github.com/dfdx/Ghost.jl/blob/main/docs/src/logo.png">
 </p>
 
 
