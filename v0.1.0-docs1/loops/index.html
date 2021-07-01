@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Loops · Ghost</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Ghost</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Main</a></li><li><a class="tocitem" href="../trace/">Linearized traces</a></li><li><a class="tocitem" href="../tape/">Tape anatomy</a></li><li class="is-active"><a class="tocitem" href>Loops</a></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Loops</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Loops</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/dfdx/Ghost.jl/blob/master/docs/src/loops.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Loops"><a class="docs-heading-anchor" href="#Loops">Loops</a><a id="Loops-1"></a><a class="docs-heading-anchor-permalink" href="#Loops" title="Permalink"></a></h1><p>By default, Ghost records all function calls as they are executed. If a particular function is executed several times inside of a loop, Ghost will record each execution separately:</p><pre><code class="language-julia">using Ghost
+
+
+function loop1(x, n)
+    while n &gt; 0
+        x = 2x
+        n = n - 1
+    end
+    return x
+end
+
+_, tape1 = trace(loop1, 2.0, 3)</code></pre><pre class="documenter-example-output">(16.0, Tape{Dict{Any, Any}}
+  inp %1::typeof(Main.__atexample__258.loop1)
+  inp %2::Float64
+  inp %3::Int64
+  %4 = &gt;(%3, 0)::Bool
+  %5 = *(2, %2)::Float64
+  %6 = -(%3, 1)::Int64
+  %7 = &gt;(%6, 0)::Bool
+  %8 = *(2, %5)::Float64
+  %9 = -(%6, 1)::Int64
+  %10 = &gt;(%9, 0)::Bool
+  %11 = *(2, %8)::Float64
+  %12 = -(%9, 1)::Int64
+  %13 = &gt;(%12, 0)::Bool
+)</pre><p>Ghost also has experimental support for tracing loops as a special <a href="../reference/#Ghost.Loop"><code>Loop</code></a> operation which can be turned on using <a href="../reference/#Ghost.should_trace_loops!"><code>should_trace_loops!(true)</code></a></p><pre><code class="language-julia">using Ghost
+import Ghost: should_trace_loops!
+
+should_trace_loops!(true)
+
+function loop1(x, n)
+    while n &gt; 0
+        x = 2x
+        n = n - 1
+    end
+    return x
+end
+
+_, tape2 = trace(loop1, 2.0, 3)</code></pre><pre class="documenter-example-output">(16.0, Tape{Dict{Any, Any}}
+  inp %1::typeof(Main.__atexample__259.loop1)
+  inp %2::Float64
+  inp %3::Int64
+  %4 = Loop(%3, %2)
+  %5 = getfield(%4, 1)::Float64
+)</pre><p>Unlike fully static tape which always executes as many iterations as there were during the tracing, tape with loops follows the control flow of the original function:</p><pre><code class="language-julia-repl">play!(tape1, loop1, 2.0, 3)  # ==&gt; 16.0
+play!(tape1, loop1, 2.0, 4)  # ==&gt; 16.0
+play!(tape1, loop1, 2.0, 5)  # ==&gt; 16.0
+
+play!(tape2, loop1, 2.0, 3)  # ==&gt; 16.0
+play!(tape2, loop1, 2.0, 4)  # ==&gt; 32.0
+play!(tape2, loop1, 2.0, 5)  # ==&gt; 64.0</code></pre><p>Note that <a href="../reference/#Ghost.Loop"><code>Loop</code></a> itself contains a subtape and is quite independent from the outer tape.</p><pre><code class="language-julia">tape2[V(4)].subtape</code></pre><pre><code class="nohighlight">Tape{Dict{Any, Any}}
+  inp %1::Int64
+  inp %2::Float64
+  %3 = &gt;(%1, 0)::Bool
+  %4 = *(2, %2)::Float64
+  %5 = -(%1, 1)::Int64</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>To work correctly, <a href="../reference/#Ghost.Loop"><code>Loop</code></a> expects at least one full iteration during both - tracing and execution.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tape/">« Tape anatomy</a><a class="docs-footer-nextpage" href="../reference/">Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.3 on <span class="colophon-date" title="Thursday 1 July 2021 22:57">Thursday 1 July 2021</span>. Using Julia version 1.6.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

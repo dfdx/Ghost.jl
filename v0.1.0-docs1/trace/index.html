@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Linearized traces · Ghost</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Ghost</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Main</a></li><li class="is-active"><a class="tocitem" href>Linearized traces</a></li><li><a class="tocitem" href="../tape/">Tape anatomy</a></li><li><a class="tocitem" href="../loops/">Loops</a></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Linearized traces</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Linearized traces</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/dfdx/Ghost.jl/blob/master/docs/src/trace.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Linearized-traces"><a class="docs-heading-anchor" href="#Linearized-traces">Linearized traces</a><a id="Linearized-traces-1"></a><a class="docs-heading-anchor-permalink" href="#Linearized-traces" title="Permalink"></a></h1><p>Usually, programs are executed as a sequence of nested function calls, e.g.:</p><pre><code class="language-julia">foo(x) = 2x
+bar(x, y) = foo(x) + 3y
+baz(x, y) = bar(x, y) - 1
+
+baz(1.0, 2.0)</code></pre><pre class="documenter-example-output">7.0</pre><p>Sometimes, however, it&#39;s more convenient to work with a linearized representation of the computation. Example use cases include collecting computational graphs for automatic differentiation, exporting to ONNX, serialization of functions to library-independent format, etc. <a href="../reference/#Ghost.trace"><code>trace()</code></a> lets you obtain such a linearized representation:</p><pre><code class="language-julia">using Ghost
+
+val, tape = trace(baz, 1.0, 2.0)</code></pre><pre class="documenter-example-output">(7.0, Tape{Dict{Any, Any}}
+  inp %1::typeof(Main.__atexample__271.baz)
+  inp %2::Float64
+  inp %3::Float64
+  %4 = *(2, %2)::Float64
+  %5 = *(3, %3)::Float64
+  %6 = +(%4, %5)::Float64
+  %7 = -(%6, 1)::Float64
+)</pre><p><a href="../reference/#Ghost.trace"><code>trace()</code></a> returns two values - the result of the original function call and the generated tape. The structure of the tape is described in <a href="../tape/#Tape-anatomy">Tape anatomy</a> section, here just note that <a href="../reference/#Ghost.trace"><code>trace()</code></a> recursed into <code>baz()</code>, <code>bar()</code> and <code>foo()</code>, but recorded <code>+</code>, <code>-</code> and <code>*</code> onto the tape as is. This is because <code>+</code>, <code>-</code> and <code>*</code> are considered &quot;primitives&quot;, i.e. the most basic operations which all other functions consist of. This behavior can be customized using one of the two keyword arguments:</p><ul><li><code>primitives</code> - an iterable of functions to be considered primitive</li><li><code>is_primitive(sig)</code> - a function which takes a method call signature and returns <code>true</code> if this method must be considered primitive and <code>false</code> otherwise</li></ul><p>Here&#39;s an example:</p><pre><code class="language-julia">val, tape = trace(baz, 1.0, 2.0; primitives=Set([+, -, *, foo]))</code></pre><pre class="documenter-example-output">(7.0, Tape{Dict{Any, Any}}
+  inp %1::typeof(Main.__atexample__272.baz)
+  inp %2::Float64
+  inp %3::Float64
+  %4 = foo(%2)::Float64
+  %5 = *(3, %3)::Float64
+  %6 = +(%4, %5)::Float64
+  %7 = -(%6, 1)::Float64
+)</pre><p>The default behavior is defined by <a href="../reference/#Ghost.is_primitive"><code>Ghost.is_primitive</code></a> function and can be extended e.g. like this:</p><pre><code class="language-julia">function custom_is_primitive(sig)
+    return Ghost.is_primitive(sig) || sig == Tuple{typeof(foo), Float64}
+end
+
+val, tape = trace(baz, 1.0, 2.0; is_primitive=custom_is_primitive)</code></pre><pre class="documenter-example-output">(7.0, Tape{Dict{Any, Any}}
+  inp %1::typeof(Main.__atexample__273.baz)
+  inp %2::Float64
+  inp %3::Float64
+  %4 = foo(%2)::Float64
+  %5 = *(3, %3)::Float64
+  %6 = +(%4, %5)::Float64
+  %7 = -(%6, 1)::Float64
+)</pre><p>See also <a href="../reference/#Ghost.FunctionResolver"><code>Ghost.FunctionResolver</code></a> for better understanding of the implementation of <code>is_primitive</code>.</p><p>In complex scenarios it may be useful to bring additional application-specific data together with a tape. For this purpose <a href="../reference/#Ghost.Tape"><code>Tape</code></a> is parametrized by a context type which is <code>Dict{Any, Any}</code> by default, but can be anything. A context object can be attached during tracing using the <code>ctx</code> keyword:</p><pre><code class="language-julia">mutable struct MyCtx
+    a
+    b
+end
+
+val, tape = trace(baz, 1.0, 2.0; ctx=MyCtx(0, 0))</code></pre><pre class="documenter-example-output">(7.0, Tape{Main.__atexample__274.MyCtx}
+  inp %1::typeof(Main.__atexample__274.baz)
+  inp %2::Float64
+  inp %3::Float64
+  %4 = *(2, %2)::Float64
+  %5 = *(3, %3)::Float64
+  %6 = +(%4, %5)::Float64
+  %7 = -(%6, 1)::Float64
+)</pre><p>The presense of the context doesn&#39;t affect tracing, but can be used during further tape processing. See <a href="../tape/#Tape-context">Tape context</a> for more details.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Main</a><a class="docs-footer-nextpage" href="../tape/">Tape anatomy »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.3 on <span class="colophon-date" title="Thursday 1 July 2021 22:57">Thursday 1 July 2021</span>. Using Julia version 1.6.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
