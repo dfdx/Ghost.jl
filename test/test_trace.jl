@@ -1,4 +1,7 @@
-import Ghost: trace, V, Call, play!
+module TestTrace
+using Test
+using Ghost
+using Ghost: trace, V, Call, play!, should_trace_loops!, compile, Loop
 
 inc_mul(a::Real, b::Real) = a * (b + 1.0)
 inc_mul(A::AbstractArray, B::AbstractArray) = inc_mul.(A, B)
@@ -93,11 +96,14 @@ end
 
 
 function loop3(a, b)
+    #count = 0
     while b > 1
         b = b - 1
         a = b
         while a < 100
+            #count += 1
             a = a * b + 1
+            #@show count
         end
     end
     return a
@@ -147,9 +153,12 @@ end
     @test findfirst(op -> op isa Loop, tape.ops) !== nothing
 
     _, tape = trace(loop3, 1.0, 3)
-    @test play!(tape, loop3, 2.0, 4) == loop3(2.0, 4)
-    @test compile(tape)(loop3, 2.0, 4) == loop3(2.0, 4)
-    @test findfirst(op -> op isa Loop, tape.ops) !== nothing
+    println("1")
+    println(tape)
+    println(Ghost.to_expr(tape))
+    @show play!(tape, loop3, 2.0, 4) == loop3(2.0, 4)
+    @show compile(tape)(loop3, 2.0, 4) == loop3(2.0, 4)
+    @show findfirst(op -> op isa Loop, tape.ops) !== nothing
 
     _, tape = trace(loop4, 1.0, 2, 3)
     @test play!(tape, loop4, 2.0, 3, 4) == loop4(2.0, 3, 4)
@@ -169,3 +178,5 @@ end
 
     should_trace_loops!()
 end
+
+end#module

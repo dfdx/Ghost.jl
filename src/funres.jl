@@ -60,10 +60,17 @@ function Base.getindex(rsv::FunctionResolver{T}, @nospecialize sig::Type{<:Tuple
     return nothing
 end
 
+if Vararg isa Type
+    # Vararg changes between julia 1.6 and julia 1.7
+    is_Vararg(T) = T isa Type && T <: Vararg
+else
+    is_Vararg(T) = T isa typeof(Vararg)
+end
 
 function isless_signature(sig1, sig2)
     # signatures with Varargs should go last
-    if any([p isa Type && p <: Vararg for p in get_type_parameters(sig2)])
+    params = get_type_parameters(sig2)
+    if any(is_Vararg, get_type_parameters(sig2))
         return true
     else
         return sig1 <: sig2

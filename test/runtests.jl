@@ -8,6 +8,6 @@ using CUDA
 
 include("test_funres.jl")
 include("test_tape.jl")
-include("test_trace.jl")
 include("test_helpers.jl")
 include("test_devices.jl")
+include("test_trace.jl")
