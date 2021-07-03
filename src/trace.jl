@@ -398,7 +398,6 @@ function exit_loop!(t::IRTracer,
         # exit_val = subtape[exit_var].val
         subtape.result = bound(t.tape, V(length(t.tape)))   # dummy, not used in practice
         # record the loop operation
-        # global STATE = (t, input_ir_ids, exit_target_ir_ids)
         parent_input_vars = [parent_ir2tape[ir_id] for ir_id in input_ir_ids]
         condition = subtape.meta[LOOP_COND_ID]
         cont_vars = subtape.meta[LOOP_CONTINUE_TAPE_IDS]
@@ -495,7 +494,7 @@ function trace_branches!(ir::IR)
         for branch in IRTools.branches(block)
             if IRTools.isreturn(branch)
                 ret_v = branch.args[1]
-                push!(ir, Expr(:call, set_return!, self, Ref(ret_v)))
+                push!(block, Expr(:call, set_return!, self, Ref(ret_v)))
             else
                 ssa_args = branch.args
                 target_params = [v.id for v in ir.blocks[branch.block].args]

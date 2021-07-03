@@ -75,6 +75,24 @@ end
 end
 
 
+
+function return_in_branch(x)
+    if x > 0
+        return 2x
+    end
+    return 3x
+end
+
+@testset "trace: branches" begin
+    # See https://github.com/dfdx/Ghost.jl/issues/8
+    _, tape = trace(return_in_branch, 1.0)
+    @test tape[V(length(tape))].args[1] == 2
+
+    _, tape = trace(return_in_branch, -1.0)
+    @test tape[V(length(tape))].args[1] == 3
+end
+
+
 function loop1(a, n)
     a = 2a
     for i in 1:n
