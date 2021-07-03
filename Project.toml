@@ -1,7 +1,7 @@
 name = "Ghost"
 uuid = "4f8f7498-1303-42e1-920c-5033445536df"
 authors = ["Andrei Zhabinski <andrei.zhabinski@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
