@@ -557,10 +557,34 @@ function trace_loops!(ir::IR)
 end
 
 
+
+function my_expand!(ir::IR)
+    worklist = IRTools.blocks(ir)
+    spats = Dict(b => Dict() for b in IRTools.blocks(ir))
+    while !isempty(worklist)
+      b = pop!(worklist)
+      b.id == 1 && continue
+      defs = IRTools.definitions(b)
+      uses = IRTools.usages(b)
+      uses = sort(collect(uses), by=v->v.id)
+      for v in setdiff(uses, defs)
+        haskey(spats[b], v) && continue
+        spats[b][v] = IRTools.argument!(b, v)
+        for c in IRTools.predecessors(b)
+          c in worklist || push!(worklist, c)
+        end
+      end
+      ir.blocks[b.id] = IRTools.prewalk(x -> get(spats[b], x, x), ir.blocks[b.id])
+    end
+    return ir
+  end
+
+
 @dynamo function (t::IRTracer)(fargs...)
     ir = IR(fargs...)
     ir === nothing && return   # intrinsic functions
-    IRTools.expand!(ir)
+    # IRTools.expand!(ir)
+    my_expand!(ir)
     rewrite_special_cases!(ir)
     for (v, st) in ir
         ex = st.expr
