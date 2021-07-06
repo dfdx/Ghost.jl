@@ -69,7 +69,6 @@ end
 
 function isless_signature(sig1, sig2)
     # signatures with Varargs should go last
-    get_type_parameters(sig2)
     if any(is_Vararg, get_type_parameters(sig2))
         return true
     else
