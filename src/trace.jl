@@ -558,7 +558,12 @@ end
 
 
 
-function my_expand!(ir::IR)
+function expand!(ir::IR)
+    # TODO delete this function
+    # Variables orders may be switched in IRTools.expand!
+    # depending on details of the julia version/environment.
+    # This bandaid forces a uniform order
+    # See also https://github.com/dfdx/Ghost.jl/pull/7
     worklist = IRTools.blocks(ir)
     spats = Dict(b => Dict() for b in IRTools.blocks(ir))
     while !isempty(worklist)
@@ -566,7 +571,7 @@ function my_expand!(ir::IR)
       b.id == 1 && continue
       defs = IRTools.definitions(b)
       uses = IRTools.usages(b)
-      uses = sort(collect(uses), by=v->v.id)
+      uses = sort(collect(uses), by=v->v.id, rev=true)
       for v in setdiff(uses, defs)
         haskey(spats[b], v) && continue
         spats[b][v] = IRTools.argument!(b, v)
@@ -583,8 +588,7 @@ function my_expand!(ir::IR)
 @dynamo function (t::IRTracer)(fargs...)
     ir = IR(fargs...)
     ir === nothing && return   # intrinsic functions
-    # IRTools.expand!(ir)
-    my_expand!(ir)
+    expand!(ir)
     rewrite_special_cases!(ir)
     for (v, st) in ir
         ex = st.expr
