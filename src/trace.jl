@@ -9,7 +9,7 @@ function module_functions(modl)
         isdefined(modl, s) || continue
         fn = getfield(modl, s)
         # && match(r"^[a-z#]+$", string(s)) != nothing
-        if fn isa Function && !in(string(fn)[1], "#_@")
+        if fn isa Function && !in(string(fn)[1], "#@")
             push!(res, fn)
         end
     end
