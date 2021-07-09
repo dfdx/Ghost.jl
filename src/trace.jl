@@ -529,7 +529,7 @@ function trace_loops!(ir::IR)
             # loop start - the first block of the loop
             loop_input_ir_ids = vcat(
                 block_input_ir_ids(start_block),
-                block_outsider_ir_ids(start_block),
+                # block_outsider_ir_ids(start_block),
             )
             pushfirst!(start_block, Expr(:call, enter_loop!, self, loop_id, loop_input_ir_ids))
             # loop tracing border - at this point all operations of the loop
