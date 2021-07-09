@@ -27,6 +27,17 @@ function add(x, y)
 end
 
 
+function constant_return_value(x)
+    2x
+    nothing
+end
+
+
+function no_input()
+    print()
+end
+
+
 @testset "trace" begin
     # calls
     val, tape = trace(inc_mul, 2.0, 3.0)
@@ -72,6 +83,14 @@ end
     @test val == f(xs)
     xs2 = rand(5)
     @test play!(tape, nothing, xs2) == f(xs2)
+
+    # constant return value
+    _, tape = trace(constant_return_value, 1.0)
+    @test play!(tape, 2.0) === nothing
+
+    # no input
+    _, tape = trace(no_input)
+    @test tape[V(2)].fn == print
 end
 
 
