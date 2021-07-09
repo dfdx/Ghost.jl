@@ -147,13 +147,7 @@ end
 function push_frame!(t::IRTracer, fargs, farg_irvars...)
     tape_vars = get_tape_vars(t, farg_irvars)
     frame = Frame(
-        # TODO: if a constant is passed to the function,
-        # tape doesn't contain a corresponding variable
-        # (in previous versions there was a Constant node for this)
-        # possible solution:
         Dict(i => v for (i, v) in enumerate(tape_vars)),
-        # also make ir2tape accept values
-        # Dict(i => v for (i, v) in enumerate(tape_vars) if v isa V),
         V(0),
         fargs,
     )
@@ -182,10 +176,14 @@ end
 
 """Set return variable for the current frame"""
 function set_return!(t::IRTracer, arg_sid_ref)
-    @assert(arg_sid_ref[] !== nothing,
-    "Cannot set return value to nothing. Does this function actually return a value?")
     tape_var = get_tape_vars(t, [arg_sid_ref[]])[1]
-    t.frames[end].result = tape_var
+    if tape_var isa V
+        t.frames[end].result = tape_var
+    else
+        # if the function returns a constant (e.g. nothing), record it
+        res = push!(t.tape, Constant(tape_var))
+        t.frames[end].result = res
+    end
 end
 
 
