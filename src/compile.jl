@@ -75,7 +75,7 @@ end
 Generate a Julia expression corresponding to the tape.
 """
 function to_expr(tape::Tape)
-    fn_name = gensym("grad_$(tape[V(1)].val)")
+    fn_name = gensym("tape_$(tape[V(1)].val)")
     header = Expr(:call, fn_name)
     for v in inputs(tape)
         op = tape[v]

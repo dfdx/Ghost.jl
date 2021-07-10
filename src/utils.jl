@@ -1,3 +1,15 @@
+"""
+    __new__(T, args...)
+
+User-level version of the `new()` pseudofunction.
+Can be used to construct most Julia types, including structs
+without default constructors, closures, etc.
+"""
+@generated function __new__(T, args...)
+    return Expr(:splatnew, :T, :args)
+end
+
+
 "Check if an object is of a struct type, i.e. not a number or array"
 isstruct(::Type{T}) where T = !isempty(fieldnames(T))
 isstruct(obj) = isstruct(typeof(obj))
