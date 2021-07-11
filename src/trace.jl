@@ -25,7 +25,7 @@ const BASE_PRIMITIVE_FUNCTIONS = vcat(
     [Broadcast.materialize, Broadcast.broadcasted, Colon(), (:),
      Base.not_int,
      # our own special functions
-     __new__, namedtuple]);
+     __new__]);
 
 
 const PRIMITIVES = FunctionResolver{Bool}(
