@@ -1,4 +1,4 @@
-import Ghost: Tape, V, inputs!, rebind!, mkcall
+import Ghost: Tape, V, inputs!, rebind!, mkcall, primitivize!
 
 
 @testset "tape" begin
@@ -42,4 +42,21 @@ import Ghost: Tape, V, inputs!, rebind!, mkcall
     op2 = mkcall(+, V(op1), 1)
     replace!(tape, 4 => [op1, op2]; rebind_to=2)
     @test tape[V(7)].args[1].id == op2.id
+
+    # primitivize!
+    f(x) = 2x - 1
+    g(x) = f(x) + 5
+
+    tape = Tape()
+    _, x = inputs!(tape, g, 3.0)
+    y = push!(tape, mkcall(f, x))
+    z = push!(tape, mkcall(+, y, 5))
+    tape.result = z
+
+    primitivize!(tape)
+
+    @test length(tape) == 5
+    @test tape[V(3)].fn == *
+    @test tape[V(4)].fn == -
+
 end

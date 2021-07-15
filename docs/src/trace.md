@@ -55,6 +55,8 @@ end
 val, tape = trace(baz, 1.0, 2.0; is_primitive=custom_is_primitive)
 ```
 
+An easy way to get a valid call signature is to use [`Ghost.call_signature`](@ref).
+
 See also [`Ghost.FunctionResolver`](@ref) for better understanding of the implementation of `is_primitive`.
 
 In complex scenarios it may be useful to bring additional application-specific data together with a tape. For this purpose [`Tape`](@ref Ghost.Tape) is parametrized by a context type which is `Dict{Any, Any}` by default, but can be anything. A context object can be attached during tracing using the `ctx` keyword:
