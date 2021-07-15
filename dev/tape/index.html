@@ -52,7 +52,18 @@ println(tape)</code></pre><pre class="documenter-example-output">Tape{Dict{Any, 
   inp %3::Float64
   %4 = /(%2, 2)::Missing
   %5 = +(%4, 1)::Missing
-  %6 = *(%2, %3)::Float64</pre><h2 id="Tape-execution-and-compilation"><a class="docs-heading-anchor" href="#Tape-execution-and-compilation">Tape execution &amp; compilation</a><a id="Tape-execution-and-compilation-1"></a><a class="docs-heading-anchor-permalink" href="#Tape-execution-and-compilation" title="Permalink"></a></h2><p>There are 2 ways to execute a tape. For debug purposes it&#39;s easiest to run <a href="../reference/#Ghost.play!"><code>play!</code></a>:</p><pre><code class="language-julia">using Ghost
+  %6 = *(%2, %3)::Float64</pre><p>Although <a href="../reference/#Ghost.trace"><code>trace</code></a> creates a tape consisting only of primitives, tape itself can hold any function calls. It&#39;s possible to decompose all non-primitive calls on the tape to lists of corresponding primitives using <a href="../reference/#Ghost.primitivize!"><code>primitivize!</code></a>.</p><pre><code class="language-julia">import Ghost: primitivize!
+
+f(x) = 2x - 1
+g(x) = f(x) + 5
+
+tape = Tape()
+_, x = inputs!(tape, g, 3.0)
+y = push!(tape, mkcall(f, x))
+z = push!(tape, mkcall(+, y, 5))
+tape.result = z
+
+primitivize!(tape)</code></pre><h2 id="Tape-execution-and-compilation"><a class="docs-heading-anchor" href="#Tape-execution-and-compilation">Tape execution &amp; compilation</a><a id="Tape-execution-and-compilation-1"></a><a class="docs-heading-anchor-permalink" href="#Tape-execution-and-compilation" title="Permalink"></a></h2><p>There are 2 ways to execute a tape. For debug purposes it&#39;s easiest to run <a href="../reference/#Ghost.play!"><code>play!</code></a>:</p><pre><code class="language-julia">using Ghost
 import Ghost: play!
 
 foo(x) = 2x + 1
@@ -87,4 +98,4 @@ end
 function process_dsl_tape(tape::Tape{DSLContext})
     vars = tape.c.added_variables
     ...
-end</code></pre><p>Just to remind you, if your context contains variables and you plan to use <a href="../reference/#Ghost.rebind!"><code>rebind!</code></a>, you must also implement <a href="../reference/#Ghost.rebind_context!"><code>rebind_context!</code></a> for your specific context type.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../trace/">« Linearized traces</a><a class="docs-footer-nextpage" href="../loops/">Loops »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.3 on <span class="colophon-date" title="Sunday 11 July 2021 22:18">Sunday 11 July 2021</span>. Using Julia version 1.6.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><p>Just to remind you, if your context contains variables and you plan to use <a href="../reference/#Ghost.rebind!"><code>rebind!</code></a>, you must also implement <a href="../reference/#Ghost.rebind_context!"><code>rebind_context!</code></a> for your specific context type.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../trace/">« Linearized traces</a><a class="docs-footer-nextpage" href="../loops/">Loops »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.3 on <span class="colophon-date" title="Thursday 15 July 2021 22:45">Thursday 15 July 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
