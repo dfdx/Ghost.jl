@@ -308,13 +308,13 @@ end
 
 
 """
-    replace!(tape, idx => new_ops; rebind_to=length(new_ops))
+    replace!(tape, idx => new_ops; rebind_to=length(new_ops), old_new=Dict())
 
 Replace operation at specified index with 1 or more other operations,
 rebind variables in the reminder of the tape to ops[rebind_to].
 """
 function Base.replace!(tape::Tape, idx_ops::Pair{<:Integer,<:Union{Tuple,Vector}};
-                       rebind_to=length(idx_ops[2]))
+                       rebind_to=length(idx_ops[2]), old_new=Dict{Int,Int}())
     idx, ops = idx_ops
     tape[V(idx)] = ops[1]
     if idx < length(tape)
@@ -324,7 +324,8 @@ function Base.replace!(tape::Tape, idx_ops::Pair{<:Integer,<:Union{Tuple,Vector}
             push!(tape, op)
         end
     end
-    st = Dict(idx => ops[rebind_to].id)
+
+    st = merge(old_new, Dict(idx => ops[rebind_to].id))
     rebind!(tape, st; from=idx + length(ops))
     return ops[rebind_to]
 end
@@ -400,6 +401,7 @@ end
 
 """
     rebind_context!(tape::Tape, st::Dict)
+
 Rebind variables in the tape's context according to substitution table.
 By default does nothing, but can be overwitten for specific Tape{C}
 """
@@ -513,7 +515,78 @@ end
 #                                 UTILS                                #
 ########################################################################
 
+"""
+    call_signature(fn, args...)
+    call_signature(tape::Tape, op::Call)
+
+Get a signature of a function call. The obtain signature is suitable
+for `is_primitive(sig)`.
+"""
 function call_signature(tape::Tape, op::Call)
     farg_vals = map_vars(v -> tape[v].val, [op.fn, op.args...])
     return Tuple{map(typeof, farg_vals)...}
+end
+
+function call_signature(fn, args...)
+    return Tuple{map(typeof, (fn, args...))...}
+end
+
+
+"""
+    primitivize!(tape::Tape; is_primitive=is_primitive)
+
+Trace non-primitive function calls on a tape and decompose them
+into a list of corresponding primitive calls.
+
+# Example
+
+    f(x) = 2x - 1
+    g(x) = f(x) + 5
+
+    tape = Tape()
+    _, x = inputs!(tape, g, 3.0)
+    y = push!(tape, mkcall(f, x))
+    z = push!(tape, mkcall(+, y, 5))
+    tape.result = z
+
+    primitivize!(tape)
+
+    # output
+
+    Tape{Dict{Any, Any}}
+      inp %1::typeof(g)
+      inp %2::Float64
+      %3 = *(2, %2)::Float64
+      %4 = -(%3, 1)::Float64
+      %5 = +(%4, 5)::Float64
+"""
+function primitivize!(tape::Tape, op::AbstractOp)
+    id = op.id
+    fn = op.fn isa V ? tape[op.fn].val : op.fn
+    args = map_vars(a -> tape[a].val, op.args)
+    _, sub = trace(fn, args...)
+
+    new_ops = sub.ops[length(inputs(sub))+1:end]
+    old_new = Dict{Int, Int}()
+    for (i, v) in enumerate((op.fn, op.args...))
+        if v isa V
+            old_new[i] = v.id
+        end
+    end
+    replace!(tape, id => new_ops, old_new=old_new)
+    # note: not touching the context since replacement
+    # may be ambiguous for it
+end
+
+
+function primitivize!(tape::Tape; is_primitive=is_primitive)
+    # note: referencing concrete operations on the original tape
+    # they will stay the same even when we modify the tape
+    vars = [V(op) for op in tape]
+    for v in vars
+        op = tape[v]
+        if op isa Call && !is_primitive(call_signature(tape, op))
+            primitivize!(tape, op)
+        end
+    end
 end

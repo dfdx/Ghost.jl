@@ -9,6 +9,7 @@ CurrentModule = Ghost
 ```@docs
 trace
 is_primitive
+call_signature
 __new__
 ```
 
@@ -41,6 +42,7 @@ mkcall
 push!
 insert!
 replace!
+primitivize!
 ```
 
 ## Tape execution

@@ -116,6 +116,26 @@ replace!(tape, 4 => [new_op1, new_op2]; rebind_to=2)
 println(tape)
 ```
 
+Although [`trace`](@ref) creates a tape consisting only of primitives, tape itself can hold any function calls. It's possible to decompose all non-primitive calls on the tape to lists of corresponding primitives using [`primitivize!`](@ref).
+
+```@example
+using Ghost                             # hide
+import Ghost: Tape, V, inputs!, mkcall  # hide
+import Ghost: primitivize!
+
+f(x) = 2x - 1
+g(x) = f(x) + 5
+
+tape = Tape()
+_, x = inputs!(tape, g, 3.0)
+y = push!(tape, mkcall(f, x))
+z = push!(tape, mkcall(+, y, 5))
+tape.result = z
+
+primitivize!(tape)
+```
+
+
 ## Tape execution & compilation
 
 There are 2 ways to execute a tape. For debug purposes it's easiest to run [`play!`](@ref):
