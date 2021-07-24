@@ -14,4 +14,9 @@
     # non-matching signature
     rsv[Tuple{typeof(cos), Number}] = :CosineNumber
     @test rsv[Tuple{typeof(cos), String}] === nothing
+
+    # override value
+    rsv[Tuple{typeof(cos), Number}] = :CosineNumber2
+    @test rsv[Tuple{typeof(cos), Number}] == :CosineNumber2
+    @test length(rsv.signatures[Symbol("Base.#cos")]) == 1
 end

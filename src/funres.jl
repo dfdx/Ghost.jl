@@ -41,8 +41,21 @@ function Base.setindex!(rsv::FunctionResolver{T}, val::T, @nospecialize sig::Typ
     if !haskey(rsv.signatures, key)
         rsv.signatures[key] = Pair{Type, T}[]
     end
-    push!(rsv.signatures[key], sig => val)
-    rsv.ordered = false
+    pairs = rsv.signatures[key]
+    # if such signature already exists, just replace the value
+    updated = false
+    for (i, (old_sig, _)) in enumerate(pairs)
+        if sig == old_sig
+            pairs[i] = sig => val
+            updated = true
+            break
+        end
+    end
+    # otherwise push new pair and mark as unordered
+    if !updated
+        push!(pairs, sig => val)
+        rsv.ordered = false
+    end
     return val
 end
 

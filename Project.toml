@@ -1,7 +1,7 @@
 name = "Ghost"
 uuid = "4f8f7498-1303-42e1-920c-5033445536df"
 authors = ["Andrei Zhabinski <andrei.zhabinski@gmail.com>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
