@@ -327,7 +327,7 @@ function Base.replace!(tape::Tape, idx_ops::Pair{<:Integer,<:Union{Tuple,Vector}
 
     st = merge(old_new, Dict(idx => ops[rebind_to].id))
     rebind!(tape, st; from=idx + length(ops))
-    return ops[rebind_to]
+    return V(ops[rebind_to])
 end
 
 
