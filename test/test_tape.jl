@@ -22,7 +22,7 @@ import Ghost: Tape, V, inputs!, rebind!, mkcall, primitivize!
     c = mkcall(*, 2.0, V(100); val=10.0)  # manual value
     @test c.val == 10.0
 
-    # push!, insert!, replace!
+    # push!, insert!
     tape = Tape()
     a1, a2, a3 = inputs!(tape, nothing, 2.0, 5.0)
     r = push!(tape, mkcall(*, a2, a3))
@@ -38,10 +38,21 @@ import Ghost: Tape, V, inputs!, rebind!, mkcall, primitivize!
     v2.id = 100
     @test tape[r].args[2].id == 100
 
+    # replace!
+    tape2 = deepcopy(tape)
+    tape3 = deepcopy(tape)
+
     op1 = mkcall(*, V(2), 2)
     op2 = mkcall(+, V(op1), 1)
-    replace!(tape, 4 => [op1, op2]; rebind_to=2)
+    z = replace!(tape, 4 => [op1, op2]; rebind_to=2)
     @test tape[V(7)].args[1].id == op2.id
+    @test z isa V
+
+    replace!(tape2, V(4) => [op1, op2]; rebind_to=2)
+    @test tape2[V(7)].args[1].id == op2.id
+
+    replace!(tape3, tape3[V(4)] => [op1, op2]; rebind_to=2)
+    @test tape3[V(7)].args[1].id == op2.id
 
     # primitivize!
     f(x) = 2x - 1

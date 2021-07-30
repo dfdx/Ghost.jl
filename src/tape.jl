@@ -308,10 +308,12 @@ end
 
 
 """
-    replace!(tape, idx => new_ops; rebind_to=length(new_ops), old_new=Dict())
+    replace!(tape, op  => new_ops; rebind_to=length(new_ops), old_new=Dict())
 
-Replace operation at specified index with 1 or more other operations,
+Replace specified operation with 1 or more other operations,
 rebind variables in the reminder of the tape to ops[rebind_to].
+
+Operation can be specified directly, by a variable or by ID.
 """
 function Base.replace!(tape::Tape, idx_ops::Pair{<:Integer,<:Union{Tuple,Vector}};
                        rebind_to=length(idx_ops[2]), old_new=Dict{Int,Int}())
@@ -330,6 +332,16 @@ function Base.replace!(tape::Tape, idx_ops::Pair{<:Integer,<:Union{Tuple,Vector}
     return V(ops[rebind_to])
 end
 
+
+Base.replace!(
+    tape::Tape,
+    idx_ops::Pair{Variable, <:Union{Tuple,Vector}};
+    kwargs...) = replace!(tape, idx_ops[1].id => idx_ops[2]; kwargs...)
+
+Base.replace!(
+        tape::Tape,
+        idx_ops::Pair{<:AbstractOp, <:Union{Tuple,Vector}};
+        kwargs...) = replace!(tape, idx_ops[1].id => idx_ops[2]; kwargs...)
 
 ########################################################################
 #                       SPECIAL OPERATIONS                             #
