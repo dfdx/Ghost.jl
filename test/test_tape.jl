@@ -54,6 +54,36 @@ import Ghost: Tape, V, inputs!, rebind!, mkcall, primitivize!
     replace!(tape3, tape3[V(4)] => [op1, op2]; rebind_to=2)
     @test tape3[V(7)].args[1].id == op2.id
 
+    # deleteat!
+    tape = Tape()
+    _, v1, v2 = inputs!(tape, nothing, 3.0, 5.0)
+    v3 = push!(tape, mkcall(*, v1, 2))
+    v4 = push!(tape, mkcall(+, v3, v1))
+    v5 = push!(tape, mkcall(+, v4, v2))
+    v6 = push!(tape, mkcall(+, v4, v1))
+    tape2, tape3 = deepcopy(tape), deepcopy(tape)
+
+    deleteat!(tape, 5; rebind_to = 1)
+    @test tape[V(5)].args[1].id == 1
+    @test tape[V(6)].args[1].id == 1
+    @test all(x -> x[1].id == x[2], zip(tape, 1:length(tape)))
+
+    deleteat!(tape2, 5; rebind_to = 1)
+    @test tape2[V(5)].args[1].id == 1
+    @test tape2[V(6)].args[1].id == 1
+    @test all(x -> x[1].id == x[2], zip(tape2, 1:length(tape2)))
+
+    deleteat!(tape3, 5; rebind_to = 1)
+    @test tape3[V(5)].args[1].id == 1
+    @test tape3[V(6)].args[1].id == 1
+    @test all(x -> x[1].id == x[2], zip(tape3, 1:length(tape3)))
+
+    tape = Tape()
+    _, v1, v2 = inputs!(tape, nothing, 3.0, 5.0)
+    v3 = push!(tape, mkcall(println, "Test"))
+    deleteat!(tape, v3)
+    @test length(tape) == 3
+
     # primitivize!
     f(x) = 2x - 1
     g(x) = f(x) + 5

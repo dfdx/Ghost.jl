@@ -116,6 +116,21 @@ replace!(tape, 4 => [new_op1, new_op2]; rebind_to=2)
 println(tape)
 ```
 
+[`deleteat!`](@ref) is used to remove entries from the tape.
+```@example
+using Ghost                             # hide
+import Ghost: Tape, V, inputs!, mkcall  # hide
+tape = Tape()                           # hide
+_, v1, v2 = inputs!(tape, nothing, 3.0, 5.0) # hide
+v3 = push!(tape, mkcall(*, v1, 2))      # hide
+v4 = push!(tape, mkcall(+, v3, v1))     # hide
+v5 = push!(tape, mkcall(+, v4, v2))     # hide
+v6 = push!(tape, mkcall(+, v4, v1))     # hide
+
+deleteat!(tape, 5; rebind_to = 1)
+println(tape)
+```
+
 Although [`trace`](@ref) creates a tape consisting only of primitives, tape itself can hold any function calls. It's possible to decompose all non-primitive calls on the tape to lists of corresponding primitives using [`primitivize!`](@ref).
 
 ```@example

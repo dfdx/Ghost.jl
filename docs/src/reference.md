@@ -42,6 +42,7 @@ mkcall
 push!
 insert!
 replace!
+deleteat!
 primitivize!
 ```
 
