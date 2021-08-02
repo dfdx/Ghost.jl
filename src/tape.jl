@@ -344,17 +344,18 @@ Base.replace!(
         kwargs...) = replace!(tape, idx_ops[1].id => idx_ops[2]; kwargs...)
 
 """
-    deleteat!(tape::Tape, idx; rebind_to)
+    deleteat!(tape::Tape, idx; rebind_to = nothing)
 
-Remove `tape[V(idx)]` from the `tape` and
+Remove `tape[V(idx)]` from the `tape`.
+If `rebind_to` is not `nothing`, then
 replace all references to `V(idx)` with `V(rebind_to)`.
 
 `idx` may be an index or `Variable`/`AbstractOp` directly.
 """
-function Base.deleteat!(tape::Tape, idx::Integer; rebind_to)
+function Base.deleteat!(tape::Tape, idx::Integer; rebind_to = nothing)
     # delete and rebind
     deleteat!(tape.ops, idx)
-    rebind!(tape, Dict(idx => rebind_to))
+    isnothing(rebind_to) || rebind!(tape, Dict(idx => rebind_to))
 
     # shift indices for outputs up
     for i in idx:length(tape)
@@ -363,10 +364,10 @@ function Base.deleteat!(tape::Tape, idx::Integer; rebind_to)
 
     return tape
 end
-Base.deleteat!(tape::Tape, idx::Variable; rebind_to) =
-    deleteat!(tape, idx.id; rebind_to = rebind_to)
-Base.deleteat!(tape::Tape, idx::AbstractOp; rebind_to) =
-    deleteat!(tape, idx.id; rebind_to = rebind_to)
+Base.deleteat!(tape::Tape, idx::Variable; kwargs...) =
+    deleteat!(tape, idx.id; kwargs...)
+Base.deleteat!(tape::Tape, idx::AbstractOp; kwargs...) =
+    deleteat!(tape, idx.id; kwargs...)
 
 ########################################################################
 #                       SPECIAL OPERATIONS                             #

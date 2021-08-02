@@ -78,6 +78,12 @@ import Ghost: Tape, V, inputs!, rebind!, mkcall, primitivize!
     @test tape3[V(6)].args[1].id == 1
     @test all(x -> x[1].id == x[2], zip(tape3, 1:length(tape3)))
 
+    tape = Tape()
+    _, v1, v2 = inputs!(tape, nothing, 3.0, 5.0)
+    v3 = push!(tape, mkcall(println, "Test"))
+    deleteat!(tape, v3)
+    @test length(tape) == 3
+
     # primitivize!
     f(x) = 2x - 1
     g(x) = f(x) + 5
