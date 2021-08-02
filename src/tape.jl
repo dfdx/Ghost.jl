@@ -343,6 +343,23 @@ Base.replace!(
         idx_ops::Pair{<:AbstractOp, <:Union{Tuple,Vector}};
         kwargs...) = replace!(tape, idx_ops[1].id => idx_ops[2]; kwargs...)
 
+function Base.deleteat!(tape::Tape, idx::Integer; rebind_to)
+    # delete and rebind
+    deleteat!(tape.ops, idx)
+    rebind!(tape, Dict(idx => rebind_to))
+
+    # shift indices for outputs up
+    for i in idx:length(tape)
+        tape.ops[i].id -= 1
+    end
+
+    return tape
+end
+Base.deleteat!(tape::Tape, idx::Variable; rebind_to) =
+    deleteat!(tape, idx.id; rebind_to = rebind_to)
+Base.deleteat!(tape::Tape, idx::AbstractOp; rebind_to) =
+    deleteat!(tape, idx.id; rebind_to = rebind_to)
+
 ########################################################################
 #                       SPECIAL OPERATIONS                             #
 ########################################################################
