@@ -343,6 +343,14 @@ Base.replace!(
         idx_ops::Pair{<:AbstractOp, <:Union{Tuple,Vector}};
         kwargs...) = replace!(tape, idx_ops[1].id => idx_ops[2]; kwargs...)
 
+"""
+    deleteat!(tape::Tape, idx; rebind_to)
+
+Remove `tape[V(idx)]` from the `tape` and
+replace all references to `V(idx)` with `V(rebind_to)`.
+
+`idx` may be an index or `Variable`/`AbstractOp` directly.
+"""
 function Base.deleteat!(tape::Tape, idx::Integer; rebind_to)
     # delete and rebind
     deleteat!(tape.ops, idx)
