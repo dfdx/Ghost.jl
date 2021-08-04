@@ -120,19 +120,19 @@ Base.show(io::IO, op::Constant) = print(io, "const %$(op.id) = $(op.val)::$(op.t
 Operation represening function call on tape. Typically, calls
 are constructed using [`mkcall`](@ref) function.
 
-Important fields of a Call:
+Important fields of a Call{T}:
 
-* `fn::Union{Function,Type,Variable}` - function or object to be called
+* `fn::T` - function or object to be called
 * `args::Vector` - vector of variables or values used as arguments
 * `val::Any` - the result of the function call
 """
-mutable struct Call <: AbstractOp
+mutable struct Call{T} <: AbstractOp
     id::Int
     val::Any
-    fn::Union{Function,Type,Variable}
+    fn::T
     args::Vector{Any}   # vector of Variables or const values
 end
-
+Call(id, val, fn::T, args) where T = Call{T}(id, val, fn, args)
 
 pretty_type_name(T) = string(T)
 pretty_type_name(T::Type{<:Broadcast.Broadcasted}) = "Broadcasted{}"
@@ -160,7 +160,7 @@ Convenient constructor for Call operation. If val is `missing` (default)
 and call value can be calculated from (bound) variables and constants,
 they are calculated. To prevent this behavior, set val to some neutral value.
 """
-function mkcall(fn::Union{Function,Type,Variable}, args...; val=missing)
+function mkcall(fn, args...; val=missing)
     fargs = (fn, args...)
     calculable = all(
         a -> !isa(a, Variable) ||                      # not variable
