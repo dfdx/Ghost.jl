@@ -21,10 +21,11 @@ Variables (also aliesed as `V`) can be:
 mutable struct Variable
     _id::Union{<:Integer,Nothing}
     _op::Union{AbstractOp,Nothing}
+    _hash::Union{UInt64, Nothing}
 end
 
-Variable(id::Integer) = Variable(id, nothing)
-Variable(op::AbstractOp) = Variable(nothing, op)
+Variable(id::Integer) = Variable(id, nothing, nothing)
+Variable(op::AbstractOp) = Variable(nothing, op, nothing)
 
 Base.show(io::IO, v::Variable) = print(io, "%$(v.id)")
 
@@ -65,7 +66,13 @@ function Base.:(==)(v1::Variable, v2::Variable)
     return v1._op === v2._op && v1.id == v2.id
 end
 
-Base.hash(v::Variable, h::UInt) = hash(v.id, hash(v._op, h))
+function Base.hash(v::Variable, h::UInt)
+    if isnothing(v._hash)
+        h = hash(v.id, hash(v._op, h))
+        v._hash = h
+    end
+    return v._hash
+end
 
 
 const V = Variable

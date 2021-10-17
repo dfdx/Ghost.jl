@@ -22,15 +22,17 @@ import Ghost: Tape, V, inputs!, rebind!, mkcall, primitivize!
     c = mkcall(*, 2.0, V(100); val=10.0)  # manual value
     @test c.val == 10.0
 
-    # push!, insert!
+    # push!, insert!; var hash
     tape = Tape()
     a1, a2, a3 = inputs!(tape, nothing, 2.0, 5.0)
     r = push!(tape, mkcall(*, a2, a3))
     @test tape[r].val == 10.0
 
+    dct = Dict(r => :r)
     ops = [mkcall(+, a2, 1), mkcall(+, a3, 1)]
     v1, v2 = insert!(tape, 4, ops...)
     @test r.id == 6
+    @test dct[r] == :r
 
     tape[r] = mkcall(*, v1, v2)
     @test tape[r].val == 18.0
