@@ -158,6 +158,19 @@ function loop5(a, n)
     return a
 end
 
+function loop6(n)
+    a = 0
+    i = 1
+    while true
+        a += i
+        if i > n
+            break
+        end
+    end
+    return a
+end
+
+
 
 @testset "trace: loops" begin
     should_trace_loops!(false)
@@ -203,6 +216,11 @@ end
     @test loop_idx !== nothing
     subtape = tape[V(loop_idx)].subtape
     @test findfirst(op -> op isa Loop, subtape.ops) !== nothing
+
+    # Test with fixed boolean condition
+    _, tape = trace(loop6, 3)
+    @test play!(tape, loop6, 3) == loop6(3)
+    @test compile!(tape, loop6, 3) == loop6(3)
 
     should_trace_loops!()
 end
