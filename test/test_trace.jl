@@ -170,7 +170,13 @@ function loop6(n)
     return a
 end
 
-
+function myabs(x)
+    if x >= 0
+        return x
+    else
+        return -x
+    end
+end
 
 @testset "trace: loops" begin
     should_trace_loops!(false)
@@ -218,9 +224,20 @@ end
     @test findfirst(op -> op isa Loop, subtape.ops) !== nothing
 
     # Test with fixed boolean condition
+    # Currently broken
     _, tape = trace(loop6, 3)
     @test play!(tape, loop6, 3) == loop6(3)
     @test compile!(tape, loop6, 3) == loop6(3)
 
     should_trace_loops!()
+end
+
+@testset "trace: branches" begin
+    should_assert_branches!(true)
+
+    _, tape = trace(myabs, 3)
+    @test play!(tape, myabs, 3) == 3
+    @test_throws play!(tape, myabs, -3) # Throws assert exception due to bad branch
+
+    should_assert_branches!(false)
 end

@@ -89,18 +89,34 @@ Check the current value of the loop tracing option.
 """
 should_trace_loops() = get(TRACING_OPTIONS[], :trace_loops, false)
 
+"""
+    should_assert_branches!(val=false)
+
+Turn on/off loop tracing. Without parameters, resets the flag to the default value
+"""
+should_assert_branches!(val::Bool=false) = (TRACING_OPTIONS[][:assert_branches] = val)
+
+"""
+    should_assert_branches()
+
+Check the current value of the loop tracing option.
+"""
+should_assert_branches() = get(TRACING_OPTIONS[], :assert_branches, false)
+
 
 """
 Tracer options. Configured globally via the following methods:
 
 - should_trace_loops!()
+- should_assert_branches!()
 """
 struct TracerOptions
     trace_loops::Bool
+    assert_branches::Bool
 end
 
-
-TracerOptions() = TracerOptions(should_trace_loops())
+TracerOptions() = TracerOptions(should_trace_loops(),
+                                should_assert_branches())
 
 
 ################################################################################
@@ -510,9 +526,13 @@ function trace_branches!(ir::IR)
     # if a block ends with a branch, we map its parameters to tape IDs
     # which currently correspond to argument SSA IDs
     for block in IRTools.blocks(ir)
-        pushfirst!(block, Expr(:call, check_block, self, block.id))
+        if should_assert_branches()
+            pushfirst!(block, Expr(:call, check_block, self, block.id))
+        end
         for branch in IRTools.branches(block)
-            push!(block, Expr(:call, check_and_set_branch!, self, Ref(branch.condition), branch.block))
+            if should_assert_branches()
+                push!(block, Expr(:call, check_and_set_branch!, self, Ref(branch.condition), branch.block))
+            end
             if IRTools.isreturn(branch)
                 ret_v = branch.args[1]
                 push!(block, Expr(:call, set_return!, self, Ref(ret_v)))
