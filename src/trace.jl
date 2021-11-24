@@ -112,11 +112,12 @@ mutable struct IRTracer
     tape::Tape
     frames::Vector{Frame}
     options::TracerOptions
+    last_block::Union{V, Nothing}
 end
 
 function IRTracer(; ctx=Dict(), is_primitive=is_chainrules_primitive)
     tape = Tape(ctx)
-    return IRTracer(is_primitive, tape, [], TracerOptions())
+    return IRTracer(is_primitive, tape, [], TracerOptions(), nothing)
 end
 
 Base.show(io::IO, t::IRTracer) = print(io, "IRTracer($(length(t.tape)))")
@@ -184,6 +185,26 @@ function set_return!(t::IRTracer, arg_sid_ref)
         res = push!(t.tape, Constant(tape_var))
         t.frames[end].result = res
     end
+end
+
+function check_and_set_branch!(t::IRTracer, condition, block)
+    condition = get_tape_vars(t, [condition[]])[1]
+    t.last_block = push!(t.tape, mkcall(_check_and_set_branch!, condition, block, t.last_block))
+end
+function _check_and_set_branch!(condition, block, last_block)
+    if last_block == nothing && (condition == nothing || condition == false)
+        return block
+    else
+        return last_block
+    end
+end
+
+function check_block(t::IRTracer, block_id)
+    t.last_block = push!(t.tape, mkcall(_check_block, block_id, t.last_block))
+end
+function _check_block(block_id, next_block)
+    @assert next_block !== nothing ? next_block == block_id : true
+    return nothing
 end
 
 
@@ -489,7 +510,9 @@ function trace_branches!(ir::IR)
     # if a block ends with a branch, we map its parameters to tape IDs
     # which currently correspond to argument SSA IDs
     for block in IRTools.blocks(ir)
+        pushfirst!(block, Expr(:call, check_block, self, block.id))
         for branch in IRTools.branches(block)
+            push!(block, Expr(:call, check_and_set_branch!, self, Ref(branch.condition), branch.block))
             if IRTools.isreturn(branch)
                 ret_v = branch.args[1]
                 push!(block, Expr(:call, set_return!, self, Ref(ret_v)))
