@@ -128,7 +128,7 @@ mutable struct IRTracer
     tape::Tape
     frames::Vector{Frame}
     options::TracerOptions
-    last_block::Union{V, Nothing}
+    last_block_jmp_target::Union{V, Nothing}
 end
 
 function IRTracer(; ctx=Dict(), is_primitive=is_chainrules_primitive)
@@ -205,18 +205,18 @@ end
 
 function check_and_set_branch!(t::IRTracer, condition, block)
     condition = get_tape_vars(t, [condition[]])[1]
-    t.last_block = push!(t.tape, mkcall(_check_and_set_branch!, condition, block, t.last_block))
+    t.last_block_jmp_target = push!(t.tape, mkcall(_check_and_set_branch!, condition, block, t.last_block_jmp_target))
 end
-function _check_and_set_branch!(condition, block, last_block)
-    if last_block == nothing && (condition == nothing || condition == false)
+function _check_and_set_branch!(condition, block, last_block_jmp_target)
+    if last_block_jmp_target == nothing && (condition == nothing || condition == false)
         return block
     else
-        return last_block
+        return last_block_jmp_target
     end
 end
 
 function check_block(t::IRTracer, block_id)
-    t.last_block = push!(t.tape, mkcall(_check_block, block_id, t.last_block))
+    t.last_block_jmp_target = push!(t.tape, mkcall(_check_block, block_id, t.last_block_jmp_target))
 end
 function _check_block(block_id, next_block)
     @assert next_block !== nothing ? next_block == block_id : true
