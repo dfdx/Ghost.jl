@@ -535,6 +535,10 @@ function trace_branches!(ir::IR)
             end
             if IRTools.isreturn(branch)
                 ret_v = branch.args[1]
+                if should_assert_branches()
+                    # Returns are equivalent to branches to 0 in IRTools
+                    push!(block, Expr(:call, check_block, self, 0))
+                end
                 push!(block, Expr(:call, set_return!, self, Ref(ret_v)))
             else
                 ssa_args = branch.args

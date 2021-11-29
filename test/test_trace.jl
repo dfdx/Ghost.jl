@@ -178,6 +178,14 @@ function myabs(x)
     end
 end
 
+function myabs2(x)
+    if x <= 0
+        return -x
+    else
+        return 1*x
+    end
+end
+
 @testset "trace: loops" begin
     should_trace_loops!(false)
 
@@ -225,13 +233,11 @@ end
 
     # Test with fixed boolean condition
     # Currently broken
-    #=                                                                             
+    #=
     _, tape = trace(loop6, 3)
     @test play!(tape, loop6, 3) == loop6(3)
     @test compile!(tape, loop6, 3) == loop6(3)
     =#
-                                                                                    
-    should_trace_loops!()
 end
 
 @testset "trace: branches" begin
@@ -239,7 +245,11 @@ end
 
     _, tape = trace(myabs, 3)
     @test play!(tape, myabs, 3) == 3
-    @test_throws play!(tape, myabs, -3) # Throws assert exception due to bad branch
+    @test_throws AssertionError play!(tape, myabs, -3) # Throws assert exception due to bad branch
+
+    _, tape = trace(myabs2, 3)
+    @test play!(tape, myabs2, 3) == 3
+    @test_throws AssertionError play!(tape, myabs2, -3) # Test with branching flipped
 
     should_assert_branches!(false)
 end

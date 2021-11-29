@@ -1,6 +1,6 @@
 using Test
 using Ghost
-using Ghost: Loop, should_trace_loops, should_trace_loops!
+using Ghost: Loop, should_trace_loops, should_trace_loops!, should_assert_branches, should_assert_branches!
 using Ghost: compile, play!
 
 
