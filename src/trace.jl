@@ -89,18 +89,34 @@ Check the current value of the loop tracing option.
 """
 should_trace_loops() = get(TRACING_OPTIONS[], :trace_loops, false)
 
+"""
+    should_assert_branches!(val=false)
+
+Turn on/off loop tracing. Without parameters, resets the flag to the default value
+"""
+should_assert_branches!(val::Bool=false) = (TRACING_OPTIONS[][:assert_branches] = val)
+
+"""
+    should_assert_branches()
+
+Check the current value of the loop tracing option.
+"""
+should_assert_branches() = get(TRACING_OPTIONS[], :assert_branches, false)
+
 
 """
 Tracer options. Configured globally via the following methods:
 
 - should_trace_loops!()
+- should_assert_branches!()
 """
 struct TracerOptions
     trace_loops::Bool
+    assert_branches::Bool
 end
 
-
-TracerOptions() = TracerOptions(should_trace_loops())
+TracerOptions() = TracerOptions(should_trace_loops(),
+                                should_assert_branches())
 
 
 ################################################################################
@@ -112,11 +128,12 @@ mutable struct IRTracer
     tape::Tape
     frames::Vector{Frame}
     options::TracerOptions
+    last_block_jmp_target::Union{V, Nothing}
 end
 
 function IRTracer(; ctx=Dict(), is_primitive=is_chainrules_primitive)
     tape = Tape(ctx)
-    return IRTracer(is_primitive, tape, [], TracerOptions())
+    return IRTracer(is_primitive, tape, [], TracerOptions(), nothing)
 end
 
 Base.show(io::IO, t::IRTracer) = print(io, "IRTracer($(length(t.tape)))")
@@ -184,6 +201,26 @@ function set_return!(t::IRTracer, arg_sid_ref)
         res = push!(t.tape, Constant(tape_var))
         t.frames[end].result = res
     end
+end
+
+function check_and_set_branch!(t::IRTracer, condition, block)
+    condition = get_tape_vars(t, [condition[]])[1]
+    t.last_block_jmp_target = push!(t.tape, mkcall(_check_and_set_branch!, condition, block, t.last_block_jmp_target))
+end
+function _check_and_set_branch!(condition, block, last_block_jmp_target)
+    if last_block_jmp_target == nothing && (condition == nothing || condition == false)
+        return block
+    else
+        return last_block_jmp_target
+    end
+end
+
+function check_block(t::IRTracer, block_id)
+    t.last_block_jmp_target = push!(t.tape, mkcall(_check_block, block_id, t.last_block_jmp_target))
+end
+function _check_block(block_id, next_block)
+    @assert next_block !== nothing ? next_block == block_id : true
+    return nothing
 end
 
 
@@ -489,9 +526,19 @@ function trace_branches!(ir::IR)
     # if a block ends with a branch, we map its parameters to tape IDs
     # which currently correspond to argument SSA IDs
     for block in IRTools.blocks(ir)
+        if should_assert_branches()
+            pushfirst!(block, Expr(:call, check_block, self, block.id))
+        end
         for branch in IRTools.branches(block)
+            if should_assert_branches()
+                push!(block, Expr(:call, check_and_set_branch!, self, Ref(branch.condition), branch.block))
+            end
             if IRTools.isreturn(branch)
                 ret_v = branch.args[1]
+                if should_assert_branches()
+                    # Returns are equivalent to branches to 0 in IRTools
+                    push!(block, Expr(:call, check_block, self, 0))
+                end
                 push!(block, Expr(:call, set_return!, self, Ref(ret_v)))
             else
                 ssa_args = branch.args

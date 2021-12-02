@@ -158,6 +158,33 @@ function loop5(a, n)
     return a
 end
 
+function loop6(n)
+    a = 0
+    i = 1
+    while true
+        a += i
+        if a > n
+            break
+        end
+    end
+    return a
+end
+
+function myabs(x)
+    if x >= 0
+        return x
+    else
+        return -x
+    end
+end
+
+function myabs2(x)
+    if x <= 0
+        return -x
+    else
+        return 1*x
+    end
+end
 
 @testset "trace: loops" begin
     should_trace_loops!(false)
@@ -205,4 +232,26 @@ end
     @test findfirst(op -> op isa Loop, subtape.ops) !== nothing
 
     should_trace_loops!()
+
+    # Test with fixed boolean condition
+    # Currently broken
+    #=
+    _, tape = trace(loop6, 3)
+    @test play!(tape, loop6, 3) == loop6(3)
+    @test compile(tape, loop6, 3) == loop6(3)
+    =#
+end
+
+@testset "trace: branches" begin
+    should_assert_branches!(true)
+
+    _, tape = trace(myabs, 3)
+    @test play!(tape, myabs, 3) == 3
+    @test_throws AssertionError play!(tape, myabs, -3) # Throws assert exception due to bad branch
+
+    _, tape = trace(myabs2, 3)
+    @test play!(tape, myabs2, 3) == 3
+    @test_throws AssertionError play!(tape, myabs2, -3) # Test with branching flipped
+
+    should_assert_branches!(false)
 end
