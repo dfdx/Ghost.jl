@@ -231,6 +231,8 @@ end
     subtape = tape[V(loop_idx)].subtape
     @test findfirst(op -> op isa Loop, subtape.ops) !== nothing
 
+    should_trace_loops!()
+
     # Test with fixed boolean condition
     # Currently broken
     #=
