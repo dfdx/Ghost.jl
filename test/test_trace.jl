@@ -163,7 +163,7 @@ function loop6(n)
     i = 1
     while true
         a += i
-        if i > n
+        if a > n
             break
         end
     end
