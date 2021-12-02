@@ -236,7 +236,7 @@ end
     #=
     _, tape = trace(loop6, 3)
     @test play!(tape, loop6, 3) == loop6(3)
-    @test compile!(tape, loop6, 3) == loop6(3)
+    @test compile(tape, loop6, 3) == loop6(3)
     =#
 end
 
