@@ -99,9 +99,10 @@ end
 mutable struct Input <: AbstractOp
     id::Int
     val::Any
+    tape
 end
 
-Input(val::Any) = Input(0, val)
+Input(val::Any) = Input(0, val, nothing)
 
 Base.show(io::IO, op::Input) = print(io, "inp %$(op.id)::$(op.typ)")
 
@@ -113,11 +114,12 @@ mutable struct Constant <: AbstractOp
     id::Int
     typ::Type
     val
+    tape
 end
 
 
-Constant(id::Int, val) = Constant(id, typeof(val), val)
-Constant(val) = Constant(0, typeof(val), val)
+Constant(id::Int, val) = Constant(id, typeof(val), val, nothing)
+Constant(val) = Constant(0, typeof(val), val, nothing)
 Base.show(io::IO, op::Constant) = print(io, "const %$(op.id) = $(op.val)::$(op.typ)")
 
 
@@ -138,8 +140,9 @@ mutable struct Call{T} <: AbstractOp
     val::Any
     fn::T
     args::Vector{Any}   # vector of Variables or const values
+    tape
 end
-Call(id, val, fn::T, args) where T = Call{T}(id, val, fn, args)
+Call(id, val, fn::T, args) where T = Call{T}(id, val, fn, args, nothing)
 
 pretty_type_name(T) = string(T)
 pretty_type_name(T::Type{<:Broadcast.Broadcasted}) = "Broadcasted{}"
@@ -279,6 +282,7 @@ Push a new operation to the end of the tape.
 function Base.push!(tape::Tape, op::AbstractOp)
     new_id = length(tape) + 1
     op.id = new_id
+    op.tape = tape
     push!(tape.ops, op)
     return V(op)
 end
@@ -394,7 +398,11 @@ mutable struct Loop <: AbstractOp
     exit_vars::Vector{Variable}
     subtape::Tape
     val::Any
+    tape
 end
+
+Loop(id, parent_inputs, condition, cont_vars, exit_vars, subtape, val) =
+    Loop(id, parent_inputs, condition, cont_vars, exit_vars, subtape, val, nothing)
 
 function Base.show(io::IO, loop::Loop)
     input_str = join(map(string, loop.parent_inputs), ", ")

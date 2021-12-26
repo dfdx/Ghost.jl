@@ -309,8 +309,9 @@ end
 """Pseudo op to designate loop end. Removed after Loop op is created"""
 mutable struct _LoopEnd <: AbstractOp
     id::Int
+    tape
 end
-_LoopEnd() = _LoopEnd(0)
+_LoopEnd() = _LoopEnd(0, nothing)
 
 
 const LOOP_EXIT_TAPE_IDS = "loop_exit_tape_ids"
