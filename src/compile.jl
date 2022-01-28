@@ -75,11 +75,14 @@ end
 Generate a Julia expression corresponding to the tape.
 """
 function to_expr(tape::Tape)
-    fn_name = gensym("tape_$(tape[V(1)].val)")
+    fn_name = tape[V(1)].val isa Function ? gensym("tape_$(tape[V(1)].val)") : gensym("tape")
     header = Expr(:call, fn_name)
     for v in inputs(tape)
         op = tape[v]
         push!(header.args, Expr(:(::), make_name(op), op.typ))
+    end
+    if get(tape.meta, :isva, false)
+        header.args[end] = Expr(:..., header.args[end].args[1])
     end
     body = Expr(:block)
     for op in tape

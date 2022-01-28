@@ -86,7 +86,7 @@ end
 
     # constant return value
     _, tape = trace(constant_return_value, 1.0)
-    @test play!(tape, 2.0) === nothing
+    @test play!(tape, nothing, 2.0) === nothing
 
     # no input
     _, tape = trace(no_input)

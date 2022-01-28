@@ -243,7 +243,7 @@ inputs(tape::Tape) = [V(op) for op in tape.ops if op isa Input]
 
 "Set values of a tape inputs"
 function inputs!(tape::Tape, vals...)
-    @assert(isempty(tape) || length(inputs(tape)) == length(vals),
+    @assert(isempty(tape) || length(inputs(tape)) == length(vals) || get(tape.meta, :isva, false),
             "This tape contains $(length(inputs(tape))) inputs, but " *
             "$(length(vals)) value(s) were provided")
     if isempty(tape)
@@ -253,6 +253,11 @@ function inputs!(tape::Tape, vals...)
         end
     else
         # rewrite input values
+        if get(tape.meta, :isva, false)
+            # group varargs into a single tuple
+            nargs = length(inputs(tape))
+            vals = (vals[1:nargs - 1]..., vals[nargs:end])
+        end
         for (i, val) in enumerate(vals)
             tape[V(i)].val = val
         end
@@ -550,10 +555,11 @@ Execute operations on the tape one by one.
 If `debug=true`, print each operation before execution.
 """
 function play!(tape::Tape, args...; debug=false)
-    for (i, val) in enumerate(args)
-        @assert(tape[V(i)] isa Input, "More arguments than the original function had")
-        tape[V(i)].val = val
-    end
+    # for (i, val) in enumerate(args)
+    #     @assert(tape[V(i)] isa Input, "More arguments than the original function had")
+    #     tape[V(i)].val = val
+    # end
+    inputs!(tape, args...)
     for op in tape
         if debug
             println(op)
