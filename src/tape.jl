@@ -448,7 +448,7 @@ rebind!(::Tape, ::Input, ::Dict) = ()
 rebind!(::Tape, ::Constant, ::Dict) = ()
 
 function rebind!(tape::Tape, op::Call, st::Dict)
-    for v in op.args
+    for v in (op.fn, op.args...)
         if v isa Variable
             rebind!(tape, v, st)
         end
